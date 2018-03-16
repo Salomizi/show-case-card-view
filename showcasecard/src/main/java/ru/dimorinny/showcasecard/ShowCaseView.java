@@ -59,6 +59,7 @@ public class ShowCaseView extends FrameLayout {
     private boolean hideAnimationPerforming = false;
 
     private PointF position;
+    private PointF endPosition;
     private ShowCasePosition typedPosition;
 
     private float radius = -1F;
@@ -99,8 +100,13 @@ public class ShowCaseView extends FrameLayout {
     private void setContent(RelativeLayout layout, String text, String cancelText, String nextText, int textColor) {
         cardContent = layout;
 
+        TextView textView = (TextView) cardContent.findViewById(R.id.showcase_text);
         Button nextButton = (Button) cardContent.findViewById(R.id.next_button);
         Button cancelButton = (Button) cardContent.findViewById(R.id.cancel_button);
+
+        if (textView != null) {
+            textView.setText(text);
+        }
 
         if (nextButton != null) {
             nextButton.setText(nextText);
@@ -269,11 +275,7 @@ public class ShowCaseView extends FrameLayout {
         card.setLayoutParams(cardLayoutParams);
     }
 
-    private void showAfterMeasured(
-            final Activity activity,
-            final ViewGroup container,
-            View measuredView
-    ) {
+    private void showAfterMeasured(final Activity activity, final ViewGroup container, View measuredView) {
         MeasuredUtils.afterOrAlreadyMeasured(measuredView, new MeasuredUtils.OnMeasuredHandler() {
             @Override
             public void onMeasured() {
@@ -282,15 +284,11 @@ public class ShowCaseView extends FrameLayout {
                 List<View> viewsToMeasure = new ArrayList<>();
 
                 if (typedPosition != null && typedPosition instanceof ViewPosition) {
-                    viewsToMeasure.add(
-                            ((ViewPosition) typedPosition).getView()
-                    );
+                    viewsToMeasure.add(((ViewPosition) typedPosition).getView());
                 }
 
                 if (typedRadius != null && typedRadius instanceof ViewRadius) {
-                    viewsToMeasure.add(
-                            ((ViewRadius) typedRadius).getView()
-                    );
+                    viewsToMeasure.add(((ViewRadius) typedRadius).getView());
                 }
 
                 if (!viewsToMeasure.isEmpty()) {
@@ -300,6 +298,10 @@ public class ShowCaseView extends FrameLayout {
                                 @Override
                                 public void onMeasured() {
                                     position = typedPosition.getPosition(activity);
+
+                                    View viewToMeasure = ((ViewPosition) typedPosition).getView();
+                                    endPosition = new PointF(viewToMeasure.getRight(), viewToMeasure.getBottom());
+
                                     radius = typedRadius.getRadius();
                                     show(container);
                                 }
@@ -318,7 +320,7 @@ public class ShowCaseView extends FrameLayout {
     public void onDraw(Canvas canvas) {
         super.onDraw(canvas);
         canvas.drawPaint(overlayPaint);
-        canvas.drawCircle(position.x, position.y, radius, circlePaint);
+        canvas.drawRect(position.x, position.y, endPosition.x, endPosition.y, circlePaint);
     }
 
     @Override
@@ -443,7 +445,12 @@ public class ShowCaseView extends FrameLayout {
         }
 
         public Builder withColor(@ColorRes int overlayColor) {
-            color = overlayColor;
+            this.color = overlayColor;
+            return this;
+        }
+
+        public Builder withTextColor(@ColorRes int textColor) {
+            this.textColor = textColor;
             return this;
         }
 
@@ -459,7 +466,7 @@ public class ShowCaseView extends FrameLayout {
         }
 
         @SuppressLint("InflateParams")
-        public Builder withContent(String cardText, String cancelText, String nextText, int textColor) {
+        public Builder withContent(String cardText, String cancelText, String nextText) {
             this.contentView = (RelativeLayout) activity.getLayoutInflater().inflate(
                     R.layout.item_show_case_content,
                     null
@@ -467,7 +474,6 @@ public class ShowCaseView extends FrameLayout {
             this.contentText = cardText;
             this.cancelText = cancelText;
             this.nextText = nextText;
-            this.textColor = textColor;
 
             return this;
         }
