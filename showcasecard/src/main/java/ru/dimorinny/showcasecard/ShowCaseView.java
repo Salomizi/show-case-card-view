@@ -18,7 +18,9 @@ import android.view.Gravity;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.FrameLayout;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import java.util.ArrayList;
@@ -65,7 +67,7 @@ public class ShowCaseView extends FrameLayout {
     private int cardRightOffset = 0;
     private int cardLeftOffset = 0;
 
-    private TextView cardContent;
+    private RelativeLayout cardContent;
 
     public ShowCaseView(Context context) {
         super(context);
@@ -85,9 +87,36 @@ public class ShowCaseView extends FrameLayout {
         circlePaint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.CLEAR));
     }
 
-    private void setContent(TextView contentView, String text) {
-        cardContent = contentView;
-        cardContent.setText(text);
+    private void setContent(RelativeLayout layout, String text) {
+        cardContent = layout;
+
+        TextView showCaseTextView = (TextView) cardContent.findViewById(R.id.showcase_text);
+        if (showCaseTextView != null) {
+            showCaseTextView.setText(text);
+        }
+    }
+
+    private void setContent(RelativeLayout layout, String text, String cancelText, String nextText, int textColor) {
+        cardContent = layout;
+
+        Button nextButton = (Button) cardContent.findViewById(R.id.next_button);
+        Button cancelButton = (Button) cardContent.findViewById(R.id.cancel_button);
+
+        if (nextButton != null) {
+            nextButton.setText(nextText);
+
+            if (textColor != -1) {
+                nextButton.setTextColor(textColor);
+            }
+        }
+
+        if (cancelButton != null) {
+            cancelButton.setText(cancelText);
+
+            if (textColor != -1) {
+                cancelButton.setTextColor(textColor);
+            }
+        }
     }
 
     private boolean isTouchInCircle(MotionEvent touchEvent) {
@@ -215,7 +244,6 @@ public class ShowCaseView extends FrameLayout {
     }
 
     private void configureCard(ViewGroup card) {
-        cardContent.setMaxWidth(getCardWidth());
         cardContent.setPadding(
                 CARD_PADDING_VERTICAL,
                 CARD_PADDING_HORIZONTAL,
@@ -385,8 +413,11 @@ public class ShowCaseView extends FrameLayout {
         @ColorRes
         private int color = R.color.black20;
         private ShowCaseRadius radius = new Radius(128F);
-        private TextView contentView;
+        private RelativeLayout contentView;
         private String contentText;
+        private String cancelText;
+        private String nextText;
+        private int textColor = -1;
         private DismissListener dismissListener;
         private ShowCasePosition position = new Position(
                 new PointF(0F, 0F)
@@ -418,8 +449,8 @@ public class ShowCaseView extends FrameLayout {
 
         @SuppressLint("InflateParams")
         public Builder withContent(String cardText) {
-            this.contentView = (TextView) activity.getLayoutInflater().inflate(
-                    R.layout.item_show_case_content,
+            this.contentView = (RelativeLayout) activity.getLayoutInflater().inflate(
+                    R.layout.item_show_case_content_text,
                     null
             );
             this.contentText = cardText;
@@ -427,7 +458,21 @@ public class ShowCaseView extends FrameLayout {
             return this;
         }
 
-        public ShowCaseView build() {
+        @SuppressLint("InflateParams")
+        public Builder withContent(String cardText, String cancelText, String nextText, int textColor) {
+            this.contentView = (RelativeLayout) activity.getLayoutInflater().inflate(
+                    R.layout.item_show_case_content,
+                    null
+            );
+            this.contentText = cardText;
+            this.cancelText = cancelText;
+            this.nextText = nextText;
+            this.textColor = textColor;
+
+            return this;
+        }
+
+        public ShowCaseView buildShowCaseText() {
             ShowCaseView view = new ShowCaseView(activity);
             view.dismissListener = this.dismissListener;
             view.typedRadius = this.radius;
@@ -436,6 +481,20 @@ public class ShowCaseView extends FrameLayout {
 
             if (this.contentView != null && contentText != null) {
                 view.setContent(this.contentView, this.contentText);
+            }
+
+            return view;
+        }
+
+        public ShowCaseView buildShowCaseLayout() {
+            ShowCaseView view = new ShowCaseView(activity);
+            view.dismissListener = this.dismissListener;
+            view.typedRadius = this.radius;
+            view.typedPosition = this.position;
+            view.overlayPaint.setColor(ContextCompat.getColor(activity, this.color));
+
+            if (this.contentView != null && contentText != null) {
+                view.setContent(this.contentView, this.contentText, this.cancelText, this.nextText, this.textColor);
             }
 
             return view;
